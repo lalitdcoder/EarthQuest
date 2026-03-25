@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/earth_state_notifier.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../screens/simulator_screen.dart';
+import '../screens/impact_summary_screen.dart';
 import 'planet_widget.dart';
 
 /// The bespoke deep-earth hero at the top of the Home Screen.
-class HeroSection extends StatefulWidget {
+class HeroSection extends ConsumerStatefulWidget {
   const HeroSection({super.key});
 
   @override
-  State<HeroSection> createState() => _HeroSectionState();
+  ConsumerState<HeroSection> createState() => _HeroSectionState();
 }
 
-class _HeroSectionState extends State<HeroSection>
+class _HeroSectionState extends ConsumerState<HeroSection>
     with TickerProviderStateMixin {
   late final AnimationController _orbitCtrl;
   late final AnimationController _pulseCtrl;
@@ -94,6 +97,7 @@ class _HeroSectionState extends State<HeroSection>
               size: 200,
               orbitCtrl: _orbitCtrl,
               pulse: _pulse,
+              healthScore: ref.watch(earthStateProvider.select((s) => s.metrics.healthScore)),
             ),
           ),
 
@@ -133,6 +137,26 @@ class _HeroSectionState extends State<HeroSection>
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // ── Impact Button ─────────────────────────────────
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ImpactSummaryScreen()),
+              ),
+              child: Text(
+                'View your impact  ›',
+                style: AppTextStyles.cardMeta.copyWith(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.1,
+                ),
               ),
             ),
           ),

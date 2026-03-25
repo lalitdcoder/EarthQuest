@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 abstract class AppColors {
   // Core palette
   static const Color background = Color(0xFFF2E4CC); // Cream/Sand
+  static const Color terracotta = Color(0xFFC76B4B); // Earthy red
+  static const Color cream      = Color(0xFFF9F1E5); // Rich off-white
   static const Color heroDeep   = Color(0xFF3B2A1A); // Deep Earth
   static const Color accent     = Color(0xFFC4935A); // Muted Gold
   static const Color success    = Color(0xFF2E6B4F); // Forest Green

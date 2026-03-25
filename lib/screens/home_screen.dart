@@ -5,7 +5,7 @@ import '../widgets/hero_section.dart';
 import '../widgets/act_card.dart';
 import '../widgets/explore_grid.dart';
 import '../widgets/topic_pill_row.dart';
-import '../widgets/lesson_list.dart';
+import '../widgets/parallax_lesson_carousel.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'profile_screen.dart';
 
@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: AppColors.learnTint,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('6 available',
+                  child: Text('4 available',
                       style: AppTextStyles.cardMeta.copyWith(
                         color: AppColors.success,
                         fontWeight: FontWeight.w600,
@@ -115,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 12)),
-        const SliverToBoxAdapter(child: LessonList()),
+        const SliverToBoxAdapter(child: ParallaxLessonCarousel()),
 
         // bottom padding
         const SliverToBoxAdapter(child: SizedBox(height: 32)),

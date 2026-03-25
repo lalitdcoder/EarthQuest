@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Shared lesson data model used by [LessonList] and [LessonDetailScreen].
 class LessonModel {
+  final String id;
   final String emoji;
   final Color iconBg;
   final String title;
@@ -14,6 +15,7 @@ class LessonModel {
   final List<String> keyFacts;
 
   const LessonModel({
+    required this.id,
     required this.emoji,
     required this.iconBg,
     required this.title,
@@ -40,6 +42,7 @@ class LessonSection {
 /// Canonical lesson catalogue — single source of truth.
 const lessons = [
   LessonModel(
+    id: 'formation-earth',
     emoji: '🌎',
     iconBg: Color(0xFFE1F5EE),
     title: 'Formation of Earth',
@@ -85,6 +88,7 @@ const lessons = [
     ],
   ),
   LessonModel(
+    id: 'volcanic-eruptions',
     emoji: '🔥',
     iconBg: Color(0xFFFAEEDA),
     title: 'Volcanic Eruptions',
@@ -124,6 +128,7 @@ const lessons = [
     ],
   ),
   LessonModel(
+    id: 'ocean-currents',
     emoji: '🌊',
     iconBg: Color(0xFFE3F0FF),
     title: 'Ocean Currents',
@@ -163,6 +168,7 @@ const lessons = [
     ],
   ),
   LessonModel(
+    id: 'jet-streams',
     emoji: '🌬️',
     iconBg: Color(0xFFEAF3DE),
     title: 'Jet Streams',
