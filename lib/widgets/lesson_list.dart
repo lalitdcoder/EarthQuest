@@ -1,50 +1,27 @@
 import 'package:flutter/material.dart';
+import '../models/lesson_model.dart';
+import '../screens/lesson_detail_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
-class _Lesson {
-  final String emoji;
-  final Color iconBg;
-  final String title;
-  final String meta;
-  final bool locked;
-  const _Lesson(this.emoji, this.iconBg, this.title, this.meta,
-      {this.locked = false});
-}
-
-const _lessons = [
-  _Lesson('🌎', Color(0xFFE1F5EE), 'Formation of Earth',
-      '8 min · Intro'),
-  _Lesson('🔥', Color(0xFFFAEEDA), 'Volcanic Eruptions',
-      '12 min · Geology'),
-  _Lesson('🌊', Color(0xFFE3F0FF), 'Ocean Currents',
-      '10 min · Oceans'),
-  _Lesson('🌬️', Color(0xFFEAF3DE), 'Jet Streams',
-      '9 min · Atmosphere'),
-  _Lesson('🪨', Color(0xFFF5EDE4), 'Rock Cycle',
-      '11 min · Geology', locked: true),
-  _Lesson('☄️', Color(0xFFF2E8F8), 'Asteroid Impact',
-      '15 min · Space', locked: true),
-];
-
-/// Scrollable lesson list
+/// Scrollable lesson list — data driven by the shared [lessons] catalogue.
 class LessonList extends StatelessWidget {
   const LessonList({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      children: _lessons.asMap().entries.map((entry) {
+      children: lessons.asMap().entries.map((entry) {
         final i = entry.key;
         final lesson = entry.value;
-        return _LessonRow(lesson: lesson, isLast: i == _lessons.length - 1);
+        return _LessonRow(lesson: lesson, isLast: i == lessons.length - 1);
       }).toList(),
     );
   }
 }
 
 class _LessonRow extends StatefulWidget {
-  final _Lesson lesson;
+  final LessonModel lesson;
   final bool isLast;
   const _LessonRow({required this.lesson, required this.isLast});
 
@@ -53,21 +30,39 @@ class _LessonRow extends StatefulWidget {
 }
 
 class _LessonRowState extends State<_LessonRow> {
-  bool _hovered = false;
+  bool _pressed = false;
+
+  void _navigate() {
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, animation, __) =>
+            LessonDetailScreen(lesson: widget.lesson),
+        transitionsBuilder: (_, animation, __, child) {
+          final slide = Tween<Offset>(
+            begin: const Offset(1, 0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic));
+          return SlideTransition(position: slide, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 380),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTapDown: (_) => setState(() => _hovered = true),
-      onTapUp: (_) => setState(() => _hovered = false),
-      onTapCancel: () => setState(() => _hovered = false),
-      onTap: widget.lesson.locked ? null : () {},
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) => setState(() => _pressed = false),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTap: widget.lesson.locked ? null : _navigate,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 130),
         margin: EdgeInsets.fromLTRB(20, 0, 20, widget.isLast ? 0 : 10),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: _hovered
+          color: _pressed
               ? AppColors.cardLight
               : Colors.white.withValues(alpha: 0.7),
           borderRadius: BorderRadius.circular(16),
@@ -96,15 +91,16 @@ class _LessonRowState extends State<_LessonRow> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(widget.lesson.title,
-                      style: AppTextStyles.lessonTitle.copyWith(
-                        color: widget.lesson.locked
-                            ? AppColors.textLight
-                            : AppColors.textDark,
-                      )),
+                  Text(
+                    widget.lesson.title,
+                    style: AppTextStyles.lessonTitle.copyWith(
+                      color: widget.lesson.locked
+                          ? AppColors.textLight
+                          : AppColors.textDark,
+                    ),
+                  ),
                   const SizedBox(height: 3),
-                  Text(widget.lesson.meta,
-                      style: AppTextStyles.lessonMeta),
+                  Text(widget.lesson.meta, style: AppTextStyles.lessonMeta),
                 ],
               ),
             ),
@@ -119,12 +115,14 @@ class _LessonRowState extends State<_LessonRow> {
             else
               Padding(
                 padding: const EdgeInsets.only(left: 8),
-                child: Text('›',
-                    style: TextStyle(
-                      fontSize: 22,
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.w300,
-                    )),
+                child: Text(
+                  '›',
+                  style: TextStyle(
+                    fontSize: 22,
+                    color: AppColors.accent,
+                    fontWeight: FontWeight.w300,
+                  ),
+                ),
               ),
           ],
         ),
