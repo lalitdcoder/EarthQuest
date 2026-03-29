@@ -74,8 +74,8 @@ class EarthQuestApp extends StatelessWidget {
         hoverColor: Colors.transparent,
         pageTransitionsTheme: const PageTransitionsTheme(
           builders: {
-            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+            TargetPlatform.android: _FadeScaleTransitionsBuilder(),
+            TargetPlatform.iOS: _FadeScaleTransitionsBuilder(),
             TargetPlatform.macOS: _FadeScaleTransitionsBuilder(),
           },
         ),

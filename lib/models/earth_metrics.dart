@@ -25,7 +25,7 @@ class EarthMetrics {
     temp: 1.1,
     co2: 415.0,
     ice: 0.72,
-    healthScore: 62.0,
+    healthScore: 50.0,
   );
 
   /// Returns a copy with any provided fields overridden.

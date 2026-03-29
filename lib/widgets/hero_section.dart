@@ -65,15 +65,27 @@ class _HeroSectionState extends ConsumerState<HeroSection>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('EarthQuest', style: AppTextStyles.display),
-                  const SizedBox(height: 2),
-                  Text('Explore our solar system',
-                      style: AppTextStyles.heroSub),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('EarthQuest', style: AppTextStyles.display),
+                    const SizedBox(height: 2),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 600),
+                      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                      child: Text(
+                        '${ref.watch(earthStateProvider.select((s) => s.userStats.earthRank))} · Level ${ref.watch(earthStateProvider.select((s) => s.userStats.currentLevel))}',
+                        key: ValueKey(ref.watch(earthStateProvider.select((s) => s.userStats.earthRank + s.userStats.currentLevel.toString()))),
+                        style: AppTextStyles.heroSub,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               Container(
                 width: 42,
                 height: 42,

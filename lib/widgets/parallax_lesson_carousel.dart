@@ -188,13 +188,22 @@ class _ParallaxCard extends StatelessWidget {
                     const Spacer(),
                     Text(
                       lesson.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.cardTitle.copyWith(fontSize: 18),
                     ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(lesson.meta, style: AppTextStyles.cardMeta),
-                        const Spacer(),
+                          Expanded(
+                            child: Text(
+                              lesson.meta,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.cardMeta,
+                            ),
+                          ),
+                        const SizedBox(width: 8),
                         if (progress >= 1.0)
                           const Icon(Icons.check_circle, size: 16, color: AppColors.success)
                         else if (progress > 0)

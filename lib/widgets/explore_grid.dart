@@ -1,23 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/earth_state_notifier.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 /// The 3-card "Explore" grid: Learn · Play · Act
-class ExploreGrid extends StatelessWidget {
+class ExploreGrid extends ConsumerWidget {
   const ExploreGrid({super.key});
 
-  static const _items = [
-    _ExploreItem('Learn', '📚', AppColors.learnTint, AppColors.success, '24 lessons'),
-    _ExploreItem('Play', '🎮', AppColors.playTint, AppColors.accent, '6 games'),
-    _ExploreItem('Act', '🌿', AppColors.actTint, Color(0xFF4A8C3F), '3 challenges'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(earthStateProvider.select((s) => s.userStats));
+    
+    // Calculate real counts from lessonProgress
+    final completedLessons = stats.lessonProgress.where((p) => p.fraction >= 1.0).length;
+    final totalLessons = 24; // Hardcoded for now until we have a proper lesson list provider/config
+    
+    final items = [
+      _ExploreItem('Learn', '📚', AppColors.learnTint, AppColors.success, '$completedLessons / $totalLessons done'),
+      const _ExploreItem('Play', '🎮', AppColors.playTint, AppColors.accent, '6 games'),
+      const _ExploreItem('Act', '🌿', AppColors.actTint, Color(0xFF4A8C3F), '3 challenges'),
+    ];
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
-        children: _items.asMap().entries.map((entry) {
+        children: items.asMap().entries.map((entry) {
           final i = entry.key;
           final item = entry.value;
           return Expanded(
@@ -92,6 +100,8 @@ class _ExploreCardState extends State<_ExploreCard> {
               const SizedBox(height: 3),
               Text(
                 widget.item.sub,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.cardMeta.copyWith(
                   color: widget.item.accentColor,
                   fontWeight: FontWeight.w600,

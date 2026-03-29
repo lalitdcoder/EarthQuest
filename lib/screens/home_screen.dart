@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../models/lesson_model.dart'; // To get total lessons
+import '../providers/earth_state_notifier.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/hero_section.dart';
@@ -9,14 +12,14 @@ import '../widgets/parallax_lesson_carousel.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'profile_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _navIndex = 0;
 
   // Lazily build only the active tab body.
@@ -30,6 +33,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _homeBody() {
+    final unlockedLessons = lessons.where((l) => !l.locked).length;
+    
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -104,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: AppColors.learnTint,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text('4 available',
+                  child: Text('$unlockedLessons available',
                       style: AppTextStyles.cardMeta.copyWith(
                         color: AppColors.success,
                         fontWeight: FontWeight.w600,

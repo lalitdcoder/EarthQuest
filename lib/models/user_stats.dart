@@ -33,6 +33,17 @@ class UserStats {
 
   /// Track individual lesson progress.
   List<LessonProgress> lessonProgress = [];
+
+  // ── Gamification Helpers ─────────────────────────────────────
+
+  /// Current level based on XP.
+  int get currentLevel => (totalXp / 100).floor() + 1;
+
+  /// XP required for the next level.
+  int get nextLevelXp => currentLevel * 100;
+
+  /// XP progress in current level (0–100).
+  int get currentLevelXpProgress => totalXp % 100;
 }
 
 /// Local tracking for how much of a lesson is completed.

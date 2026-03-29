@@ -1,7 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/earth_state_notifier.dart';
+import '../services/share_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../widgets/share_card.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Data
@@ -52,16 +56,62 @@ const _achievements = [
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen
 // ─────────────────────────────────────────────────────────────────────────────
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  final GlobalKey _shareKey = GlobalKey();
+
+  @override
   Widget build(BuildContext context) {
+    final state = ref.watch(earthStateProvider);
+    final stats = state.userStats;
+    final impact = state.impact;
+    final completedLessons = stats.lessonProgress.where((p) => p.fraction >= 1.0).length;
+
+    final impactItems = [
+      _ImpactStat('🌱', 'Carbon Saved', '${(stats.totalXp * 0.18).toStringAsFixed(1)} kg', 'CO₂ offset',
+          AppColors.learnTint, AppColors.success),
+      _ImpactStat('🌳', 'Trees Planted', '${impact.treesPlanted}', 'via rewards',
+          AppColors.actTint, const Color(0xFF4A8C3F)),
+      _ImpactStat('📖', 'Lessons Done', '$completedLessons', 'completed',
+          AppColors.playTint, AppColors.accent),
+      _ImpactStat('🔥', 'Streak', '${stats.currentStreak} days', 'personal best: ${stats.highestStreak}',
+          const Color(0xFFFFF0E0), const Color(0xFFE07B39)),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
+      floatingActionButton: FloatingActionButton.extended(
+        backgroundColor: AppColors.terracotta,
+        onPressed: () => ShareService.captureAndShare(_shareKey),
+        icon: const Icon(Icons.share, color: Colors.white, size: 20),
+        label: const Text('SHARE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      ),
+      body: Stack(
+        children: [
+          // ── Hidden Content for Image Capture ───────────────
+          Positioned(
+            left: -2000,
+            child: Offstage(
+              offstage: false,
+              child: RepaintBoundary(
+                key: _shareKey,
+                child: ShareCard(
+                  rank: stats.earthRank,
+                  streak: stats.currentStreak,
+                  health: state.metrics.healthScore,
+                ),
+              ),
+            ),
+          ),
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
           // ── Profile hero header ─────────────────────────────
           const SliverToBoxAdapter(child: _ProfileHeader()),
 
@@ -97,8 +147,8 @@ class ProfileScreen extends StatelessWidget {
                 childAspectRatio: 1.35,
               ),
               delegate: SliverChildBuilderDelegate(
-                (context, i) => _ImpactCard(stat: _impactStats[i]),
-                childCount: _impactStats.length,
+                (context, i) => _ImpactCard(stat: impactItems[i]),
+                childCount: impactItems.length,
               ),
             ),
           ),
@@ -131,7 +181,7 @@ class ProfileScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '3 / 6 earned',
+                      '$completedLessons / 6 earned',
                       style: AppTextStyles.cardMeta.copyWith(
                         color: AppColors.success,
                         fontWeight: FontWeight.w600,
@@ -154,7 +204,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, i) =>
-                    _AchievementBadge(achievement: _achievements[i]),
+                    _AchievementBadge(achievement: _achievements[i], earned: i < completedLessons),
                 childCount: _achievements.length,
               ),
             ),
@@ -165,22 +215,27 @@ class ProfileScreen extends StatelessWidget {
           const SliverToBoxAdapter(child: _SettingsBlock()),
 
           // Bottom padding
-          const SliverToBoxAdapter(child: SizedBox(height: 40)),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)), // Extra padding for FAB
+        ],
+      ),
         ],
       ),
     );
   }
 }
 
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Profile Header
 // ─────────────────────────────────────────────────────────────────────────────
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends ConsumerWidget {
   const _ProfileHeader();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(earthStateProvider.select((s) => s.userStats));
     final topPad = MediaQuery.of(context).padding.top;
+    
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
@@ -225,28 +280,39 @@ class _ProfileHeader extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          Text('Alex Rivera',
+          Text('Alex Rivera', // Note: Name could be from DB too, but UserStats doesn't have it yet.
               style: AppTextStyles.display.copyWith(fontSize: 22)),
           const SizedBox(height: 4),
-          Text('Earth Explorer · Level 4',
-              style: AppTextStyles.heroSub),
+          
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child: Text(
+              '${stats.earthRank} · Level ${stats.currentLevel}',
+              key: ValueKey('${stats.earthRank}_${stats.currentLevel}'),
+              style: AppTextStyles.heroSub,
+            ),
+          ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
 
           // XP progress bar
-          _XpBar(xp: 680, nextLevel: 1000),
+          _XpBar(
+            xp: stats.currentLevelXpProgress, 
+            nextLevelXp: 100, // Every 100 XP is a level in our math
+            currentLevel: stats.currentLevel,
+          ),
 
-          const SizedBox(height: 18),
+          const SizedBox(height: 24),
 
           // Quick stat chips row
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              _StatChip('🏅', '680 XP'),
-              SizedBox(width: 10),
-              _StatChip('📍', 'Level 4'),
-              SizedBox(width: 10),
-              _StatChip('👥', '12 Friends'),
+            children: [
+              _StatChip('🏅', '${stats.totalXp} XP'),
+              const SizedBox(width: 10),
+              _StatChip('📍', 'Level ${stats.currentLevel}'),
+              const SizedBox(width: 10),
+              const _StatChip('👥', '12 Friends'),
             ],
           ),
         ],
@@ -257,35 +323,71 @@ class _ProfileHeader extends StatelessWidget {
 
 class _XpBar extends StatelessWidget {
   final int xp;
-  final int nextLevel;
-  const _XpBar({required this.xp, required this.nextLevel});
+  final int nextLevelXp;
+  final int currentLevel;
+  
+  const _XpBar({
+    required this.xp, 
+    required this.nextLevelXp,
+    required this.currentLevel,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final progress = xp / nextLevel;
+    final progress = (xp / nextLevelXp).clamp(0.0, 1.0);
+    
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('$xp XP',
+            Text('$xp / $nextLevelXp XP',
                 style: AppTextStyles.cardMeta
                     .copyWith(color: AppColors.accent, fontWeight: FontWeight.w600)),
-            Text('$nextLevel XP to Level 5',
+            Text('To Level ${currentLevel + 1}',
                 style: AppTextStyles.cardMeta
                     .copyWith(color: Colors.white38, fontSize: 10)),
           ],
         ),
-        const SizedBox(height: 6),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 7,
-            backgroundColor: Colors.white12,
-            valueColor:
-                const AlwaysStoppedAnimation<Color>(AppColors.accent),
-          ),
+        const SizedBox(height: 10),
+        // Custom premium progress bar
+        Stack(
+          children: [
+            Container(
+              height: 10,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(5),
+              ),
+            ),
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: 0, end: progress),
+              duration: const Duration(milliseconds: 1200),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) {
+                return FractionallySizedBox(
+                  widthFactor: value,
+                  child: Container(
+                    height: 10,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [AppColors.accent, Color(0xFFD4A574)],
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.accent.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
         ),
       ],
     );
@@ -327,15 +429,19 @@ class _StatChip extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 // Streak showcase — large badge + weekly day dots
 // ─────────────────────────────────────────────────────────────────────────────
-class _StreakShowcase extends StatelessWidget {
+class _StreakShowcase extends ConsumerWidget {
   const _StreakShowcase();
 
   static const _days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-  // true = completed for that day this week
-  static const _done = [true, true, true, true, true, true, false];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final stats = ref.watch(earthStateProvider.select((s) => s.userStats));
+    
+    // For now, we use dummy "done" indicators for the week, 
+    // but the main badge is real.
+    final List<bool> doneIndicators = [true, true, stats.currentStreak > 0, false, false, false, false];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(20),
@@ -368,12 +474,18 @@ class _StreakShowcase extends StatelessWidget {
               children: [
                 const Text('🔥', style: TextStyle(fontSize: 30)),
                 const SizedBox(height: 4),
-                Text(
-                  '7',
-                  style: AppTextStyles.display.copyWith(
-                    color: AppColors.accent,
-                    fontSize: 28,
-                  ),
+                TweenAnimationBuilder<int>(
+                  tween: IntTween(begin: 0, end: stats.currentStreak),
+                  duration: const Duration(milliseconds: 1000),
+                  builder: (context, value, child) {
+                    return Text(
+                      '$value',
+                      style: AppTextStyles.display.copyWith(
+                        color: AppColors.accent,
+                        fontSize: 28,
+                      ),
+                    );
+                  },
                 ),
                 Text(
                   'day streak',
@@ -397,14 +509,14 @@ class _StreakShowcase extends StatelessWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Personal best: 14 days',
+                  'Personal best: ${stats.highestStreak} days',
                   style: AppTextStyles.cardMeta,
                 ),
                 const SizedBox(height: 14),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: _days.asMap().entries.map((e) {
-                    final done = _done[e.key];
+                    final done = doneIndicators[e.key];
                     return Column(
                       children: [
                         AnimatedContainer(
@@ -413,13 +525,13 @@ class _StreakShowcase extends StatelessWidget {
                           height: 30,
                           decoration: BoxDecoration(
                             color: done
-                                ? AppColors.accent
+                                ? AppColors.success
                                 : AppColors.border
                                     .withValues(alpha: 0.5),
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: done
-                                  ? AppColors.accent
+                                  ? AppColors.success
                                   : AppColors.border,
                               width: 0.5,
                             ),
@@ -672,11 +784,11 @@ class _WeeklyProgressCard extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────────
 class _AchievementBadge extends StatelessWidget {
   final _Achievement achievement;
-  const _AchievementBadge({required this.achievement});
+  final bool earned;
+  const _AchievementBadge({required this.achievement, required this.earned});
 
   @override
   Widget build(BuildContext context) {
-    final earned = achievement.earned;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(

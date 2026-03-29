@@ -1,4 +1,3 @@
-// lib/screens/impact_summary_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -6,6 +5,7 @@ import '../providers/earth_state_notifier.dart';
 import '../services/share_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../widgets/share_card.dart';
 
 class ImpactSummaryScreen extends ConsumerStatefulWidget {
   const ImpactSummaryScreen({super.key});
@@ -42,7 +42,7 @@ class _ImpactSummaryScreenState extends ConsumerState<ImpactSummaryScreen> {
               offstage: false, // Must be false for RepaintBoundary to work
               child: RepaintBoundary(
                 key: _shareKey,
-                child: _ShareCard(
+                child: ShareCard(
                   rank: state.userStats.earthRank,
                   streak: state.userStats.currentStreak,
                   health: state.metrics.healthScore,
@@ -141,104 +141,7 @@ class _ImpactSummaryScreenState extends ConsumerState<ImpactSummaryScreen> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// The High-Res Share Card (Hidden from User)
-// ─────────────────────────────────────────────────────────────────────────────
-
-class _ShareCard extends StatelessWidget {
-  final String rank;
-  final int streak;
-  final double health;
-
-  const _ShareCard({
-    required this.rank,
-    required this.streak,
-    required this.health,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // Hidden export target layout
-    return Container(
-      width: 1080,
-      height: 1350, // 4:5 Instagram Ratio
-      padding: const EdgeInsets.all(80),
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('EARTHQUEST',
-              style: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-                color: AppColors.heroDeep,
-                letterSpacing: 8,
-              )),
-          const SizedBox(height: 20),
-          Container(height: 6, width: 120, color: AppColors.terracotta),
-          const Spacer(),
-          Text('Rank: $rank',
-              style: const TextStyle(
-                fontSize: 98,
-                fontWeight: FontWeight.bold,
-                color: AppColors.terracotta,
-                letterSpacing: -3,
-              )),
-          const SizedBox(height: 60),
-          _ShareStat(label: 'DAILY STREAK', value: '$streak DAYS', icon: '🔥'),
-          const SizedBox(height: 30),
-          _ShareStat(label: 'PLANET HEALTH', value: '${health.toInt()}%', icon: '🌍'),
-          const Spacer(),
-          const Text('Join the quest. Save the world.',
-              style: TextStyle(fontSize: 34, color: AppColors.textMid, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          const Text('www.earthquest.app',
-              style: TextStyle(fontSize: 24, color: AppColors.textLight)),
-        ],
-      ),
-    );
-  }
-}
-
-class _ShareStat extends StatelessWidget {
-  final String label;
-  final String value;
-  final String icon;
-
-  const _ShareStat({required this.label, required this.value, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 40, offset: const Offset(0, 15)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Text(icon, style: const TextStyle(fontSize: 54)),
-          const SizedBox(width: 40),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(fontSize: 24, letterSpacing: 2, color: AppColors.textLight, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 4),
-              Text(value, style: const TextStyle(fontSize: 64, fontWeight: FontWeight.w900, color: AppColors.heroDeep)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal UI components (Same as before)
+// Internal UI components
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _ImpactSection extends StatelessWidget {
@@ -263,7 +166,12 @@ class _ImpactSection extends StatelessWidget {
         children: [
           Text(title, style: AppTextStyles.cardMeta),
           const SizedBox(height: 4),
-          Text(value, style: AppTextStyles.display.copyWith(color: AppColors.textDark, fontSize: 32)),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.display.copyWith(color: AppColors.textDark, fontSize: 32),
+          ),
           const SizedBox(height: 4),
           Text(description, style: AppTextStyles.cardMeta),
           const SizedBox(height: 24),
@@ -280,42 +188,43 @@ class _WaterDropletGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final count = (liters / 100).ceil().clamp(0, 80);
+    final count = liters.toInt().clamp(0, 100);
     return Container(
-      height: 120,
       width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFFF1F7FF),
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.all(20),
-      child: CustomPaint(painter: _DropletPainter(count: count)),
+      child: Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: List.generate(count, (index) {
+          return CustomPaint(
+            size: const Size(16, 16),
+            painter: _SingleDropletPainter(),
+          ).animate()
+           .fadeIn(delay: (index * 40).ms)
+           .slideY(begin: -0.5, delay: (index * 40).ms, curve: Curves.easeOutBack);
+        }),
+      ),
     );
   }
 }
 
-class _DropletPainter extends CustomPainter {
-  final int count;
-  _DropletPainter({required this.count});
-
+class _SingleDropletPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = const Color(0xFF4A90E2);
-    final spacing = 20.0;
-    final cols = (size.width / spacing).floor();
-    for (int i = 0; i < count; i++) {
-        final row = i ~/ cols;
-        final col = i % cols;
-        final center = Offset(col * spacing + 10, row * spacing + 10);
-        final path = Path();
-        path.moveTo(center.dx, center.dy - 6);
-        path.quadraticBezierTo(center.dx + 5, center.dy + 2, center.dx, center.dy + 6);
-        path.quadraticBezierTo(center.dx - 5, center.dy + 2, center.dx, center.dy - 6);
-        canvas.drawPath(path, paint);
-    }
+    final center = Offset(size.width / 2, size.height / 2);
+    final path = Path();
+    path.moveTo(center.dx, center.dy - 6);
+    path.quadraticBezierTo(center.dx + 5, center.dy + 2, center.dx, center.dy + 6);
+    path.quadraticBezierTo(center.dx - 5, center.dy + 2, center.dx, center.dy - 6);
+    canvas.drawPath(path, paint);
   }
   @override
-  bool shouldRepaint(_DropletPainter old) => old.count != count;
+  bool shouldRepaint(_SingleDropletPainter old) => false;
 }
 
 class _TreeRowVisualizer extends StatelessWidget {
@@ -323,15 +232,19 @@ class _TreeRowVisualizer extends StatelessWidget {
   const _TreeRowVisualizer({required this.count});
   @override
   Widget build(BuildContext context) {
-    final displayCount = count.clamp(0, 30);
+    final displayCount = count.clamp(0, 40);
     return Container(
-      height: 120,
       width: double.infinity,
       decoration: BoxDecoration(color: const Color(0xFFF1F9F1), borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.all(20),
       child: Wrap(
         spacing: 12, runSpacing: 12,
-        children: List.generate(displayCount, (index) => const Text('🌲', style: TextStyle(fontSize: 24))),
+        children: List.generate(displayCount, (index) {
+          return const Text('🌲', style: TextStyle(fontSize: 24))
+            .animate()
+            .scale(delay: (index * 80).ms, curve: Curves.elasticOut)
+            .fadeIn(delay: (index * 80).ms);
+        }),
       ),
     );
   }
@@ -342,19 +255,25 @@ class _PlasticBlockVisualizer extends StatelessWidget {
   const _PlasticBlockVisualizer({required this.kg});
   @override
   Widget build(BuildContext context) {
-    final count = kg.ceil().clamp(0, 40);
+    final count = kg.ceil().clamp(0, 50);
     return Container(
-      height: 120,
       width: double.infinity,
       decoration: BoxDecoration(color: const Color(0xFFF9F1F1), borderRadius: BorderRadius.circular(20)),
       padding: const EdgeInsets.all(20),
-      child: GridView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 10, crossAxisSpacing: 8, mainAxisSpacing: 8),
-        itemCount: count,
-        itemBuilder: (context, i) => Container(
-            decoration: BoxDecoration(color: const Color(0xFFD0021B).withValues(alpha: 0.15), borderRadius: BorderRadius.circular(4)),
-            child: const Center(child: Text('♻️', style: TextStyle(fontSize: 10)))),
+      child: Wrap(
+        spacing: 8, runSpacing: 8,
+        children: List.generate(count, (index) {
+          return Container(
+            width: 28, height: 28,
+            decoration: BoxDecoration(
+              color: const Color(0xFFD0021B).withValues(alpha: 0.15), 
+              borderRadius: BorderRadius.circular(4)
+            ),
+            child: const Center(child: Text('♻️', style: TextStyle(fontSize: 14)))
+          ).animate()
+           .fadeIn(delay: (index * 60).ms)
+           .slideX(begin: 0.3, delay: (index * 60).ms, curve: Curves.easeOut);
+        }),
       ),
     );
   }

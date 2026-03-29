@@ -408,155 +408,169 @@ class _SlideContent extends StatelessWidget {
         : const Color(0xFF6B5040);
 
     return SafeArea(
-      child: Column(
-        children: [
-          // ── Top bar: skip ────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '${pageIndex + 1} of $totalPages',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: textSub,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                if (!isLast)
-                  GestureDetector(
-                    onTap: onAdvance,
-                    child: Text(
-                      'Skip',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: textSub,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight,
+              ),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    // ── Top bar: skip ────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '${pageIndex + 1} of $totalPages',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: textSub,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                          if (!isLast)
+                            GestureDetector(
+                              onTap: onAdvance,
+                              child: Text(
+                                'Skip',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: textSub,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
-                  ),
-              ],
-            ),
-          ),
 
-          // ── Mini planet ──────────────────────────────────────
-          const SizedBox(height: 8),
-          _MiniPlanet(
-            size: 130,
-            orbitCtrl: orbitCtrl,
-            pulseAnim: pulseAnim,
-            tint: bgValue,
-          ),
+                    // ── Mini planet ──────────────────────────────────────
+                    const SizedBox(height: 8),
+                    _MiniPlanet(
+                      size: 130,
+                      orbitCtrl: orbitCtrl,
+                      pulseAnim: pulseAnim,
+                      tint: bgValue,
+                    ),
 
-          const SizedBox(height: 28),
+                    const SizedBox(height: 28),
 
-          // ── Tag ─────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-            ),
-            child: Text(
-              slide.tag,
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: textMain.withValues(alpha: 0.8),
-                letterSpacing: 2,
+                    // ── Tag ─────────────────────────────────────────────
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                      ),
+                      child: Text(
+                        slide.tag,
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: textMain.withValues(alpha: 0.8),
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // ── Title ────────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        slide.title,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          color: textMain,
+                          height: 1.2,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ── Subtitle ─────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        slide.subtitle,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: textSub,
+                          height: 1.45,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(),
+
+                    // ── Custom slider ────────────────────────────────────
+                    _EarthSlider(
+                      value: sliderValue,
+                      colorLow: slide.colorLow,
+                      colorHigh: slide.colorHigh,
+                      lowLabel: slide.lowLabel,
+                      highLabel: slide.highLabel,
+                      textColor: textMain,
+                      onChanged: onSliderChanged,
+                      onSettled: onSliderSettled,
+                    ),
+
+                    const Spacer(),
+
+                    // ── CTA Button ───────────────────────────────────────
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(32, 0, 32, bottomPad + 12),
+                      child: _CtaButton(
+                        label: isLast ? 'Reveal my Earth Rank  →' : 'Continue  →',
+                        sliderValue: sliderValue,
+                        colorLow: slide.colorLow,
+                        colorHigh: slide.colorHigh,
+                        onTap: onAdvance,
+                      ),
+                    ),
+
+                    // ── Page dots ────────────────────────────────────────
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(totalPages, (i) {
+                          final active = i == currentPage;
+                          return AnimatedContainer(
+                            duration: const Duration(milliseconds: 250),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: active ? 20 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: active
+                                  ? Colors.white
+                                  : Colors.white.withValues(alpha: 0.3),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                          );
+                        }),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // ── Title ────────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              slide.title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 26,
-                fontWeight: FontWeight.w800,
-                color: textMain,
-                height: 1.2,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // ── Subtitle ─────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              slide.subtitle,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: textSub,
-                height: 1.45,
-              ),
-            ),
-          ),
-
-          const Spacer(),
-
-          // ── Custom slider ────────────────────────────────────
-          _EarthSlider(
-            value: sliderValue,
-            colorLow: slide.colorLow,
-            colorHigh: slide.colorHigh,
-            lowLabel: slide.lowLabel,
-            highLabel: slide.highLabel,
-            textColor: textMain,
-            onChanged: onSliderChanged,
-            onSettled: onSliderSettled,
-          ),
-
-          const Spacer(),
-
-          // ── CTA Button ───────────────────────────────────────
-          Padding(
-            padding: EdgeInsets.fromLTRB(32, 0, 32, bottomPad + 12),
-            child: _CtaButton(
-              label: isLast ? 'Reveal my Earth Rank  →' : 'Continue  →',
-              sliderValue: sliderValue,
-              colorLow: slide.colorLow,
-              colorHigh: slide.colorHigh,
-              onTap: onAdvance,
-            ),
-          ),
-
-          // ── Page dots ────────────────────────────────────────
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(totalPages, (i) {
-                final active = i == currentPage;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: active ? 20 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: active
-                        ? Colors.white
-                        : Colors.white.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }
